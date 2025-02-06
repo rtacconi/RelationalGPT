@@ -1,0 +1,10 @@
+[tool.poetry]
+name = "relational"
+version = "0.1.0"
+description = "A Python DSL for relational constraints."
+authors = ["Your Name <you@example.com>"]
+
+# ... other configuration settings ...
+
+[tool.poetry.scripts]
+relational = "relational.conditions:main"
