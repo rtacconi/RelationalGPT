@@ -42,7 +42,7 @@ class DSLParser:
         # Extract workflows
         workflows = self._extract_workflows(llm_output)
         for workflow_name, workflow_code in workflows:
-            python_code += f"\n\n{workflow_name} = {workflow_code}"
+            python_code += f"\n\n{workflow_code}"
         
         # Extract constraints
         constraints = self._extract_constraints(llm_output)
@@ -140,7 +140,12 @@ class DSLParser:
         for match in workflow_matches:
             workflow_name = match.group(1)
             workflow_title = match.group(2)
-            workflow_code = f"Workflow(\"{workflow_title}\")"
+            
+            # Initialize workflow variable with proper Python syntax
+            workflow_init = f"{workflow_name} = Workflow(\"{workflow_title}\")"
+            
+            # Create a list to collect all add_page calls
+            pages_code = []
             
             # Find all add_page() calls for this workflow
             workflow_start_pos = match.end()
@@ -157,7 +162,8 @@ class DSLParser:
                 else:
                     page_code = f"Page(\"{page_name}\")"
                 
-                workflow_code += f"\n    .add_page(\n        {page_code}"
+                # Start building the page code
+                full_page_code = f"{workflow_name}.add_page(\n    {page_code}"
                 
                 # Extract the entire page definition including chained method calls
                 page_end_pos = workflow_start_pos + page_match.end()
@@ -172,8 +178,14 @@ class DSLParser:
                         paren_count -= 1
                         if paren_count == 0:
                             page_content = remainder[:i]
-                            workflow_code += page_content + ")"
+                            full_page_code += page_content + ")"
                             break
+                
+                # Add this page to our collection
+                pages_code.append(full_page_code)
+            
+            # Build the complete workflow code
+            workflow_code = workflow_init + "\n" + "\n".join(pages_code)
             
             matches.append((workflow_name, workflow_code))
         
